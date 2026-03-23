@@ -257,7 +257,7 @@
       <div class="stat-card kmb">
         <div class="stat-dot" style="background:var(--kmb)"></div>
         <div class="stat-info">
-          <div class="stat-label">KMB (Bus)</div>
+          <div class="stat-label">KMB (Kowloon Motor Bus)</div>
           <div class="stat-value" id="cntKMB">—</div>
         </div>
       </div>
@@ -265,7 +265,7 @@
       <div class="stat-card ctb">
         <div class="stat-dot" style="background:var(--ctb)"></div>
         <div class="stat-info">
-          <div class="stat-label">CTB / Citybus</div>
+          <div class="stat-label">CTB (Citybus)</div>
           <div class="stat-value" id="cntCTB">—</div>
         </div>
       </div>
@@ -273,7 +273,7 @@
       <div class="stat-card nlb">
         <div class="stat-dot" style="background:var(--nlb)"></div>
         <div class="stat-info">
-          <div class="stat-label">NLB (Bus)</div>
+          <div class="stat-label">NLB (New Lantou Bus)</div>
           <div class="stat-value" id="cntNLB">—</div>
         </div>
       </div>
@@ -334,86 +334,6 @@
 /* ================================================================
    MTR LINE & STATION DATA  (approximate coordinates)
    ================================================================ */
-const MTR_LINES = [
-  { name:"Tsuen Wan", color:"#E2231B", coords:[
-    [22.2838,114.1584],[22.2815,114.1565],[22.2789,114.1684],[22.2761,114.1741],
-    [22.2710,114.1790],[22.2625,114.1858],[22.2590,114.1880],[22.2548,114.1915],
-    [22.2508,114.1936],[22.2474,114.1960],[22.2435,114.1982],[22.2378,114.2020],
-    [22.2340,114.2062],[22.2289,114.2108],[22.2243,114.2145],[22.2202,114.2178],
-    [22.2155,114.2218],[22.2090,114.2273],[22.2040,114.2323],[22.1984,114.2382],
-    [22.1930,114.2438],[22.1870,114.2490],[22.1810,114.2542],[22.1748,114.2595],
-    [22.1695,114.2632],[22.1640,114.2682],[22.1585,114.2732],[22.1530,114.2782],
-    [22.1475,114.2832],[22.1420,114.2882],[22.1365,114.2932],[22.1310,114.2982],
-    [22.1255,114.3032],[22.1200,114.3082],[22.1145,114.3132],[22.1090,114.3182],
-    [22.1035,114.3232],[22.0980,114.3282],[22.0925,114.3332],[22.0870,114.3382],
-    [22.0815,114.3432],[22.0760,114.3482],[22.0705,114.3532],[22.0650,114.3582],
-    [22.0595,114.3632],[22.0540,114.3682],[22.0485,114.3732],[22.0430,114.3782],
-    [22.0375,114.3832],[22.0320,114.3882],[22.0265,114.3932],[22.0210,114.3982],
-    [22.0155,114.4032],[22.0100,114.4082],[22.0045,114.4132],[21.9990,114.4182],
-    [21.9935,114.4232],[21.9880,114.4282],[21.9825,114.4332],[21.9770,114.4382],
-    [21.9715,114.4432],[21.9660,114.4482],[21.9605,114.4532],[21.9550,114.4582],
-    [21.9495,114.4632],[21.9440,114.4682],[21.9385,114.4732],[21.9330,114.4782],
-    [21.9275,114.4832],[21.9220,114.4882],[21.9165,114.4932],[21.9110,114.4982],
-    [21.9055,114.5032],[21.9000,114.5082],[21.8945,114.5132],[21.8890,114.5182],
-    [21.8835,114.5232],[21.8780,114.5282],[21.8725,114.5332],[21.8670,114.5382],
-    [21.8615,114.5432],[21.8560,114.5482],[21.8505,114.5532],[21.8450,114.5582],
-    [21.8395,114.5632],[21.8340,114.5682],[21.8285,114.5732],[21.8230,114.5782],
-    [21.8175,114.5832],[21.8120,114.5882],[21.8065,114.5932],[21.8010,114.5982],
-    [21.7955,114.6032],[21.7900,114.6082],[21.7845,114.6132],[21.7790,114.6182],
-    [21.7735,114.6232],[21.7680,114.6282],[21.7625,114.6332],[21.7570,114.6382],
-    [21.7515,114.6432],[21.7460,114.6482],[21.7405,114.6532],[21.7350,114.6582],
-    [21.7295,114.6632],[21.7240,114.6682],[21.7185,114.6732],[21.7130,114.6782],
-    [21.7075,114.6832],[21.7020,114.6882],[21.6965,114.6932],[21.6910,114.6982],
-    [21.6855,114.7032],[21.6800,114.7082],[21.6745,114.7132],[21.6690,114.7182],
-    [21.6635,114.7232],[21.6580,114.7282],[21.6525,114.7332],[21.6470,114.7382],
-    [21.6415,114.7432],[21.6360,114.7482],[21.6305,114.7532],[21.6250,114.7582],
-    [22.3380,114.1110],[22.3403,114.1155],[22.3428,114.1208],[22.3453,114.1260],
-    [22.3478,114.1313],[22.3503,114.1365],[22.3528,114.1418],[22.3553,114.1470],
-    [22.3578,114.1523],[22.3603,114.1575],[22.3628,114.1628],[22.3653,114.1680],
-    [22.3678,114.1733],[22.3703,114.1785],[22.3728,114.1838],[22.3753,114.1890],
-    [22.3778,114.1943],[22.3803,114.1995],[22.3828,114.2048],[22.3853,114.2100],
-    [22.3878,114.2153],[22.3903,114.2205],[22.3928,114.2258],[22.3953,114.2310],
-    [22.3978,114.2363],[22.4003,114.2415],[22.4028,114.2468],[22.4053,114.2520],
-    [22.4078,114.2573],[22.4103,114.2625],[22.4128,114.2678],[22.4153,114.2730],
-    [22.4178,114.2783],[22.4203,114.2835],[22.4228,114.2888],[22.4253,114.2940],
-    [22.4278,114.2993],[22.4303,114.3045],[22.4328,114.3098],[22.4353,114.3150],
-    [22.4378,114.3203],[22.4403,114.3255],[22.4428,114.3308],[22.4453,114.3360],
-    [22.4478,114.3413],[22.4503,114.3465],[22.4528,114.3518],[22.4553,114.3570],
-    [22.4578,114.3623],[22.4603,114.3675],[22.4628,114.3728],[22.4653,114.3780],
-    [22.4678,114.3833],[22.4703,114.3885],[22.4728,114.3938],[22.4753,114.3990],
-    [22.4778,114.4043],[22.4803,114.4095],[22.4828,114.4148],[22.4853,114.4200],
-    [22.4878,114.4253],[22.4903,114.4305],[22.4928,114.4358],[22.4953,114.4410],
-    [22.4978,114.4463],[22.5003,114.4515],[22.5028,114.4568],[22.5053,114.4620],
-    [22.5078,114.4673],[22.5103,114.4725],[22.5128,114.4778],[22.5153,114.4830],
-    [22.5178,114.4883],[22.5203,114.4935],[22.5228,114.4988],[22.5253,114.5040],
-    [22.5278,114.5093],[22.5303,114.5145],[22.5328,114.5198],[22.5353,114.5250],
-    [22.5378,114.5303],[22.5403,114.5355],[22.5428,114.5408],[22.5453,114.5460],
-    [22.5478,114.5513],[22.5503,114.5565],[22.5528,114.5618],[22.5553,114.5670],
-    [22.5578,114.5723],[22.5603,114.5775],[22.5628,114.5828],[22.5653,114.5880],
-    [22.5678,114.5933],[22.5703,114.5985],[22.5728,114.6038],[22.5753,114.6090],
-    [22.5778,114.6143],[22.5803,114.6195],[22.5828,114.6248],[22.5853,114.6300],
-    [22.5878,114.6353],[22.5903,114.6405],[22.5928,114.6458],[22.5953,114.6510],
-    [22.5978,114.6563],[22.6003,114.6615],[22.6028,114.6668],[22.6053,114.6720],
-    [22.6078,114.6773],[22.6103,114.6825],[22.6128,114.6878],[22.6153,114.6930],
-    [22.6178,114.6983],[22.6203,114.7035],[22.6228,114.7088],[22.6253,114.7140],
-    [22.6278,114.7193],[22.6303,114.7245],[22.6328,114.7298],[22.6353,114.7350],
-    [22.6378,114.7403],[22.6403,114.7455],[22.6428,114.7508],[22.6453,114.7560],
-    [22.6478,114.7613],[22.6503,114.7665],[22.6528,114.7718],[22.6553,114.7770],
-    [22.6578,114.7823],[22.6603,114.7875],[22.6628,114.7928],[22.6653,114.7980],
-    [22.6678,114.8033],[22.6703,114.8085],[22.6728,114.8138],[22.6753,114.8190],
-    [22.6778,114.8243],[22.6803,114.8295],[22.6828,114.8348],[22.6853,114.8400],
-    [22.6878,114.8453],[22.6903,114.8505],[22.6928,114.8558],[22.6953,114.8610],
-    [22.6978,114.8663],[22.7003,114.8715],[22.7028,114.8768],[22.7053,114.8820],
-    [22.7078,114.8873],[22.7103,114.8925],[22.7128,114.8978],[22.7153,114.9030],
-    [22.7178,114.9083],[22.7203,114.9135],[22.7228,114.9188],[22.7253,114.9240],
-    [22.7278,114.9293],[22.7303,114.9345],[22.7328,114.9398],[22.7353,114.9450],
-    [22.7378,114.9503],[22.7403,114.9555],[22.7428,114.9608],[22.7453,114.9660],
-    [22.7478,114.9713],[22.7503,114.9765],[22.7528,114.9818],[22.7553,114.9870],
-    [22.7578,114.9923],[22.7603,114.9975],[22.7628,115.0028],[22.7653,115.0080],
-  ]},
-  // ... (truncated for brevity — full data below)
-];
-
 // I'll provide the real compact data now:
 const MTR_STATIONS = [
   // ── Tsuen Wan Line ──
@@ -509,7 +429,7 @@ const MTR_STATIONS = [
   // ── Tung Chung Line ──
   {n:"Hong Kong",      la:22.2848,lo:114.1581,l:"tc"},
   // Kowloon, Olympic, Nam Cheong, Lai King shared
-  {n:"Tsing Yi",       la:22.3575,lo:114.1062,l:"tc"},
+  {n:"Tsing Yi",       la:22.3583,lo:114.1070,l:"tc"},
   {n:"Sunny Bay",      la:22.3311,lo:114.0286,l:"tc"},
   {n:"Tung Chung",     la:22.2892,lo:113.9424,l:"tc"},
   {n:"Olympic",        la:22.3174,lo:114.1601,l:"tc"},
@@ -534,6 +454,7 @@ const MTR_LINE_DEFS = [
   {name:"Island Line",        color:"#007DC5", ids:["Kennedy Town","HKU","Sai Ying Pun","Sheung Wan","Central","Admiralty","Wan Chai","Causeway Bay","Tin Hau","Fortress Hill","North Point","Quarry Bay","Tai Koo","Sai Wan Ho","Shau Kei Wan","Heng Fa Chuen","Chai Wan"]},
   {name:"Kwun Tong Line",     color:"#00AB4E", ids:["Whampoa","Ho Man Tin","Yau Ma Tei","Mong Kok","Prince Edward","Shek Kip Mei","Kowloon Tong","Lok Fu","Wong Tai Sin","Diamond Hill","Choi Hung","Kowloon Bay","Ngau Tau Kok","Kwun Tong","Lam Tin","Yau Tong","Tiu Keng Leng"]},
   {name:"East Rail Line",     color:"#53B7E8", ids:["Admiralty","Exhibition Centre","Hung Hom","Mong Kok East","Kowloon Tong","Tai Wai","Sha Tin","Fo Tan","University","Tai Po Market","Tai Wo","Fanling","Sheung Shui","Lo Wu"]},
+  {name:"East Rail Line (Spur)", color:"#53B7E8", ids:["Sheung Shui", "Lok Ma Chau"]},
   {name:"Tuen Ma Line",       color:"#9A2268", ids:["Wu Kai Sha","Ma On Shan","Heng On","Tai Shui Hang","Shek Mun","City One","Sha Tin Wai","Tai Wai","Diamond Hill","Kai Tak","Sung Wong Toi","To Kwa Wan","Hung Hom","East Tsim Sha Tsui","Austin","Nam Cheong","Mei Foo","Tsuen Wan West","Kam Sheung Road","Yuen Long","Long Ping","Tin Shui Wai","Siu Hong","Tuen Mun"]},
   {name:"Tung Chung Line",    color:"#F3982D", ids:["Hong Kong","Kowloon","Olympic","Nam Cheong","Lai King","Tsing Yi","Sunny Bay","Tung Chung"]},
   {name:"South Island Line",  color:"#CAB642", ids:["Admiralty","Ocean Park","Wong Chuk Hang","Lei Tung","South Horizons"]},
@@ -629,7 +550,7 @@ async function loadBusData() {
   const btn = document.getElementById('btnLoad');
   const status = document.getElementById('status');
 
-  // Create a hidden file input
+  // Manual file selection
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json';
@@ -645,6 +566,7 @@ async function loadBusData() {
       const text = await file.text();
       busData = JSON.parse(text);
       renderBusStops();
+      btn.textContent = 'Reload';
     } catch (err) {
       status.textContent = 'Failed to parse JSON: ' + err.message;
       btn.disabled = false;
@@ -787,6 +709,52 @@ function toggleLayer(name, visible) {
   if (visible) layers[name].addTo(map);
   else map.removeLayer(layers[name]);
 }
+
+/* ================================================================
+   AUTO-LOAD ON PAGE INIT
+   ================================================================ */
+// Auto-load bus data on page load
+document.addEventListener('DOMContentLoaded', async () => {
+  const btn = document.getElementById('btnLoad');
+  const status = document.getElementById('status');
+  
+  console.log('Page loaded, attempting auto-load...');
+  
+  // Try multiple approaches to load the file
+  const filePaths = [
+    './stops_by_operator.json',
+    'stops_by_operator.json',
+    './stops_by_operator.json?nocache=' + Date.now()
+  ];
+  
+  for (const filePath of filePaths) {
+    try {
+      console.log('Fetching', filePath, '...');
+      const response = await fetch(filePath);
+      console.log('Fetch response:', response.status, response.statusText);
+      
+      if (response.ok) {
+        const text = await response.text();
+        console.log('JSON fetched, parsing...');
+        busData = JSON.parse(text);
+        console.log('JSON parsed, rendering stops...');
+        renderBusStops();
+        status.textContent = 'Auto-loaded stops_by_operator.json';
+        btn.textContent = 'Reload';
+        console.log('Auto-load successful!');
+        return;
+      } else {
+        console.log('Fetch failed for', filePath, 'status:', response.status);
+      }
+    } catch (err) {
+      console.log('Auto-load error for', filePath, ':', err.message);
+    }
+  }
+  
+  // All attempts failed
+  console.log('All auto-load attempts failed');
+  status.textContent = 'Auto-load failed — click "Load Bus Stops" to load data';
+});
 </script>
 </body>
 </html>
