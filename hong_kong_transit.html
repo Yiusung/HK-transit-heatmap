@@ -23,7 +23,8 @@
     --muted:     #64748b;
     --kmb:       #ef4444;
     --ctb:       #eab308;
-    --other:     #22c55e;
+    --nlb:       #22c55e;
+    --other:     #a78bfa;
     --mtr:       #00bcd4;
     --accent:    #6366f1;
   }
@@ -122,6 +123,7 @@
   }
   .stat-card.kmb  { border-left-color: var(--kmb); }
   .stat-card.ctb  { border-left-color: var(--ctb); }
+  .stat-card.nlb  { border-left-color: var(--nlb); }
   .stat-card.mtr  { border-left-color: var(--mtr); }
   .stat-card .stat-dot {
     width: 10px; height: 10px;
@@ -267,6 +269,14 @@
           <div class="stat-value" id="cntCTB">—</div>
         </div>
       </div>
+      <br>
+      <div class="stat-card nlb">
+        <div class="stat-dot" style="background:var(--nlb)"></div>
+        <div class="stat-info">
+          <div class="stat-label">NLB (Bus)</div>
+          <div class="stat-value" id="cntNLB">—</div>
+        </div>
+      </div>
     </div>
 
     <div>
@@ -291,6 +301,12 @@
         <input type="checkbox" checked id="chkCTB" onchange="toggleLayer('ctb',this.checked)">
         <span class="layer-name">CTB Stops</span>
         <span class="layer-count" id="ctbBadge"></span>
+      </label>
+      <br>
+      <label class="layer-toggle">
+        <input type="checkbox" checked id="chkNLB" onchange="toggleLayer('nlb',this.checked)">
+        <span class="layer-name">NLB Stops</span>
+        <span class="layer-count" id="nlbBadge"></span>
       </label>
     </div>
 
@@ -551,6 +567,7 @@ const layers = {
   mtrStations:  L.layerGroup().addTo(map),
   kmb:          L.layerGroup().addTo(map),
   ctb:          L.layerGroup().addTo(map),
+  nlb:          L.layerGroup().addTo(map),
   density:      L.layerGroup(),          // not added by default
 };
 
@@ -599,6 +616,7 @@ let busData  = null;   // { kmb: [...], ctb: [...] }
 const OP_COLORS = {
   kmb:   {fill:'#ef4444', border:'#dc2626'},
   ctb:   {fill:'#eab308', border:'#ca8a04'},
+  nlb:   {fill:'#22c55e', border:'#16a34a'},
   nwfb:  {fill:'#22c55e', border:'#16a34a'},
   default:{fill:'#a78bfa', border:'#7c3aed'},
 };
@@ -642,14 +660,16 @@ function renderBusStops() {
 
   layers.kmb.clearLayers();
   layers.ctb.clearLayers();
+  layers.nlb.clearLayers();
 
-  let totalKMB = 0, totalCTB = 0, totalOther = 0;
+  let totalKMB = 0, totalCTB = 0, totalNLB = 0, totalOther = 0;
 
   for (const [operator, stops] of Object.entries(busData)) {
     const op = operator.toLowerCase();
     const col = opColor(op);
     const targetLayer = op === 'kmb' ? layers.kmb
                       : op === 'ctb' ? layers.ctb
+                      : op === 'nlb' ? layers.nlb
                       : null;
 
     stops.forEach(stop => {
@@ -674,21 +694,24 @@ function renderBusStops() {
       if (targetLayer) {
         marker.addTo(targetLayer);
       } else {
-        marker.addTo(layers.ctb);
+        marker.addTo(layers.nlb);
       }
     });
 
     if (op === 'kmb')      totalKMB = stops.length;
     else if (op === 'ctb') totalCTB = stops.length;
+    else if (op === 'nlb') totalNLB = stops.length;
     else                   totalOther += stops.length;
   }
 
   document.getElementById('cntKMB').textContent = totalKMB.toLocaleString();
-  document.getElementById('cntCTB').textContent = (totalCTB + totalOther).toLocaleString();
+  document.getElementById('cntCTB').textContent = totalCTB.toLocaleString();
+  document.getElementById('cntNLB').textContent = totalNLB.toLocaleString();
   document.getElementById('kmbBadge').textContent = totalKMB.toLocaleString();
-  document.getElementById('ctbBadge').textContent = (totalCTB + totalOther).toLocaleString();
+  document.getElementById('ctbBadge').textContent = totalCTB.toLocaleString();
+  document.getElementById('nlbBadge').textContent = totalNLB.toLocaleString();
 
-  status.textContent = 'Loaded ' + (totalKMB + totalCTB + totalOther).toLocaleString() + ' bus stops.';
+  status.textContent = 'Loaded ' + (totalKMB + totalCTB + totalNLB + totalOther).toLocaleString() + ' bus stops.';
   btn.textContent = 'Loaded ✓';
 }
 
