@@ -1,0 +1,13 @@
+cd C:\Users\YYC\Documents\tradePy\pub_trans_service
+python -m http.server 8000
+
+
+1. Then open 
+http://localhost:8000/hk_transit.html
+ in your browser (not the file path). Load the stops_by_operator.json
+
+2. Get the HK_transit_[DATE]_data.txt:
+python convert_stops_data.py stops_by_operator.json
+
+Then paste the string to placeholder and run the decode html.
+

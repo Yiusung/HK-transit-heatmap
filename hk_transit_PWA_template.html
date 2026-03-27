@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hong Kong Transit Density Map</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:        #080c14;
+    --surface:   #111827;
+    --surface2:  #1e293b;
+    --border:    #1e3a5f;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --kmb:       #ef4444;
+    --ctb:       #eab308;
+    --nlb:       #22c55e;
+    --other:     #a78bfa;
+    --mtr:       #00bcd4;
+    --accent:    #6366f1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Header ─────────────────────────────── */
+  .header {
+    height: 54px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 900;
+    position: relative;
+  }
+  .header h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--mtr), var(--kmb), var(--ctb));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── Buttons ────────────────────────────── */
+  .btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--accent); border-color: var(--accent); }
+  .btn.active { background: var(--accent); border-color: var(--accent); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Layout ─────────────────────────────── */
+  .app { display: flex; height: calc(100vh - 54px); }
+
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  #map { flex: 1; }
+
+  /* ── Sidebar sections ───────────────────── */
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  /* Stats cards */
+  .stat-card {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid var(--muted);
+  }
+  .stat-card.kmb  { border-left-color: var(--kmb); }
+  .stat-card.ctb  { border-left-color: var(--ctb); }
+  .stat-card.nlb  { border-left-color: var(--nlb); }
+  .stat-card.mtr  { border-left-color: var(--mtr); }
+  .stat-card .stat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .stat-card .stat-info { flex: 1; }
+  .stat-card .stat-label { font-size: 11px; color: var(--muted); }
+  .stat-card .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* Layer toggles */
+  .layer-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--surface2);
+    cursor: pointer;
+    transition: background .15s;
+    user-select: none;
+  }
+  .layer-toggle:hover { background: #263347; }
+  .layer-toggle input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+  .layer-toggle .layer-name { font-size: 13px; font-weight: 600; flex: 1; }
+  .layer-toggle .layer-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Density legend */
+  .density-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .density-bar {
+    flex: 1;
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #0d47a1, #1565c0, #42a5f5, #66bb6a, #fdd835, #ff9800, #e53935);
+  }
+
+  /* Status */
+  .status {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 6px;
+  }
+
+  /* ── Leaflet overrides ──────────────────── */
+  .leaflet-container { background: #060a10 !important; }
+  .leaflet-control-zoom a {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+  .leaflet-control-attribution { display: none !important; }
+
+  /* Tooltip */
+  .stop-popup .leaflet-popup-content-wrapper {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,.6) !important;
+  }
+  .stop-popup .leaflet-popup-tip { background: var(--surface) !important; }
+  .popup-title { font-weight: 700; font-size: 13px; }
+  .popup-sub  { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .popup-tag  {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* Scrollbar */
+  .sidebar::-webkit-scrollbar { width: 5px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; min-width: unset; max-height: 35vh; flex-direction: row; flex-wrap: wrap; }
+    .sidebar > div { min-width: 200px; flex: 1; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ─── Header ───────────────────────────── -->
+<div class="header">
+  <h1>Hong Kong Transit Density</h1>
+  <div class="header-right">
+    <button class="btn" id="btnDensity" onclick="toggleDensity()">Density Grid</button>
+  </div>
+</div>
+
+<!-- ─── App ──────────────────────────────── -->
+<div class="app">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <div>
+      <div class="section-title">Transit Providers</div>
+
+      <div class="stat-card mtr">
+        <div class="stat-dot" style="background:var(--mtr)"></div>
+        <div class="stat-info">
+          <div class="stat-label">MTR (Rail)</div>
+          <div class="stat-value" id="cntMTR">—</div>
+        </div>
+      </div>
+      <br>
+      <div class="stat-card kmb">
+        <div class="stat-dot" style="background:var(--kmb)"></div>
+        <div class="stat-info">
+          <div class="stat-label">KMB (Kowloon Motor Bus)</div>
+          <div class="stat-value" id="cntKMB">—</div>
+        </div>
+      </div>
+      <br>
+      <div class="stat-card ctb">
+        <div class="stat-dot" style="background:var(--ctb)"></div>
+        <div class="stat-info">
+          <div class="stat-label">CTB (Citybus)</div>
+          <div class="stat-value" id="cntCTB">—</div>
+        </div>
+      </div>
+      <br>
+      <div class="stat-card nlb">
+        <div class="stat-dot" style="background:var(--nlb)"></div>
+        <div class="stat-info">
+          <div class="stat-label">NLB (New Lantou Bus)</div>
+          <div class="stat-value" id="cntNLB">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Map Layers</div>
+      <label class="layer-toggle">
+        <input type="checkbox" checked onchange="toggleLayer('mtrLines',this.checked)">
+        <span class="layer-name">MTR Lines</span>
+      </label>
+      <br>
+      <label class="layer-toggle">
+        <input type="checkbox" checked onchange="toggleLayer('mtrStations',this.checked)">
+        <span class="layer-name">MTR Stations</span>
+      </label>
+      <br>
+      <label class="layer-toggle">
+        <input type="checkbox" checked id="chkKMB" onchange="toggleLayer('kmb',this.checked)">
+        <span class="layer-name">KMB Stops</span>
+        <span class="layer-count" id="kmbBadge"></span>
+      </label>
+      <br>
+      <label class="layer-toggle">
+        <input type="checkbox" checked id="chkCTB" onchange="toggleLayer('ctb',this.checked)">
+        <span class="layer-name">CTB Stops</span>
+        <span class="layer-count" id="ctbBadge"></span>
+      </label>
+      <br>
+      <label class="layer-toggle">
+        <input type="checkbox" checked id="chkNLB" onchange="toggleLayer('nlb',this.checked)">
+        <span class="layer-name">NLB Stops</span>
+        <span class="layer-count" id="nlbBadge"></span>
+      </label>
+    </div>
+
+    <div>
+      <div class="section-title">Density Legend</div>
+      <div class="density-legend">
+        <span>Low</span>
+        <div class="density-bar"></div>
+        <span>High</span>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:6px;">
+        Grid cells (≈500 m) coloured by combined stop count.
+        Toggle with the <b>Density Grid</b> button.
+      </p>
+    </div>
+
+    <div class="status" id="status">Initializing...</div>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+</div>
+
+<script>
+/* ================================================================
+   MTR LINE & STATION DATA
+   ================================================================ */
+const MTR_STATIONS = [
+  // ── Tsuen Wan Line (tw) ──
+  {n:"Central", la:22.2820, lo:114.1581, l:"tw"},
+  {n:"Admiralty", la:22.2794, lo:114.1651, l:"tw"},
+  {n:"Tsim Sha Tsui", la:22.2976, lo:114.1722, l:"tw"},
+  {n:"Jordan", la:22.3048, lo:114.1717, l:"tw"},
+  {n:"Yau Ma Tei", la:22.3130, lo:114.1705, l:"tw"},
+  {n:"Mong Kok", la:22.3190, lo:114.1694, l:"tw"},
+  {n:"Prince Edward", la:22.3246, lo:114.1685, l:"tw"},
+  {n:"Sham Shui Po", la:22.3308, lo:114.1623, l:"tw"},
+  {n:"Cheung Sha Wan", la:22.3354, lo:114.1558, l:"tw"},
+  {n:"Lai Chi Kok", la:22.3392, lo:114.1481, l:"tw"},
+  {n:"Mei Foo", la:22.3374, lo:114.1397, l:"tw"},
+  {n:"Lai King", la:22.3484, lo:114.1260, l:"tw"},
+  {n:"Kwai Fong", la:22.3570, lo:114.1274, l:"tw"},
+  {n:"Kwai Hing", la:22.3630, lo:114.1309, l:"tw"},
+  {n:"Tai Wo Hau", la:22.3708, lo:114.1246, l:"tw"},
+  {n:"Tsuen Wan", la:22.3734, lo:114.1179, l:"tw"},
+
+  // ── Island Line (il) ──
+  {n:"Kennedy Town", la:22.2811, lo:114.1287, l:"il"},
+  {n:"HKU", la:22.2840, lo:114.1348, l:"il"},
+  {n:"Sai Ying Pun", la:22.2861, lo:114.1420, l:"il"},
+  {n:"Sheung Wan", la:22.2875, lo:114.1504, l:"il"},
+  {n:"Wan Chai", la:22.2778, lo:114.1729, l:"il"},
+  {n:"Causeway Bay", la:22.2801, lo:114.1852, l:"il"},
+  {n:"Tin Hau", la:22.2825, lo:114.1917, l:"il"},
+  {n:"Fortress Hill", la:22.2885, lo:114.1938, l:"il"},
+  {n:"North Point", la:22.2913, lo:114.2006, l:"il"},
+  {n:"Quarry Bay", la:22.2911, lo:114.2109, l:"il"},
+  {n:"Tai Koo", la:22.2847, lo:114.2163, l:"il"},
+  {n:"Sai Wan Ho", la:22.2822, lo:114.2219, l:"il"},
+  {n:"Shau Kei Wan", la:22.2794, lo:114.2294, l:"il"},
+  {n:"Heng Fa Chuen", la:22.2775, lo:114.2403, l:"il"},
+  {n:"Chai Wan", la:22.2646, lo:114.2368, l:"il"},
+
+  // ── Kwun Tong Line (kt) ──
+  {n:"Whampoa", la:22.3048, lo:114.1887, l:"kt"},
+  {n:"Ho Man Tin", la:22.3094, lo:114.1824, l:"kt"},
+  {n:"Shek Kip Mei", la:22.3323, lo:114.1687, l:"kt"},
+  {n:"Kowloon Tong", la:22.3375, lo:114.1762, l:"kt"}, // Fixed (Suffolk Rd area)
+  {n:"Lok Fu", la:22.3384, lo:114.1866, l:"kt"},
+  {n:"Wong Tai Sin", la:22.3424, lo:114.1933, l:"kt"},
+  {n:"Diamond Hill", la:22.3400, lo:114.2014, l:"kt"},
+  {n:"Choi Hung", la:22.3346, lo:114.2091, l:"kt"},
+  {n:"Kowloon Bay", la:22.3235, lo:114.2140, l:"kt"},
+  {n:"Ngau Tau Kok", la:22.3155, lo:114.2190, l:"kt"},
+  {n:"Kwun Tong", la:22.3120, lo:114.2251, l:"kt"},
+  {n:"Lam Tin", la:22.3074, lo:114.2341, l:"kt"},
+  {n:"Yau Tong", la:22.2980, lo:114.2372, l:"kt"},
+  {n:"Tiu Keng Leng", la:22.3051, lo:114.2529, l:"kt"},
+
+  // ── Tseung Kwan O Line (tko) ──
+  {n:"Tseung Kwan O", la:22.3073, lo:114.2598, l:"tko"},
+  {n:"Hang Hau", la:22.3155, lo:114.2644, l:"tko"},
+  {n:"Po Lam", la:22.3225, lo:114.2577, l:"tko"},
+  {n:"LOHAS Park", la:22.2954, lo:114.2687, l:"tko"},
+
+  // ── South Island Line (sil) ──
+  {n:"Ocean Park", la:22.2492, lo:114.1741, l:"sil"},
+  {n:"Wong Chuk Hang", la:22.2478, lo:114.1683, l:"sil"},
+  {n:"Lei Tung", la:22.2427, lo:114.1561, l:"sil"},
+  {n:"South Horizons", la:22.2435, lo:114.1487, l:"sil"},
+
+  // ── Tung Chung Line (tc) & Airport Express (ae) ──
+  {n:"Hong Kong", la:22.2847, lo:114.1584, l:"tc"},
+  {n:"Kowloon", la:22.3040, lo:114.1614, l:"tc"},
+  {n:"Olympic", la:22.3178, lo:114.1603, l:"tc"},
+  {n:"Nam Cheong", la:22.3274, lo:114.1534, l:"tc"},
+  {n:"Tsing Yi", la:22.3584, lo:114.1073, l:"tc"},
+  {n:"Sunny Bay", la:22.3224, lo:114.0227, l:"tc"},
+  {n:"Tung Chung", la:22.2892, lo:113.9413, l:"tc"},
+  {n:"Airport", la:22.3155, lo:113.9348, l:"ae"},
+  {n:"AsiaWorld-Expo", la:22.3210, lo:113.9410, l:"ae"},
+  {n:"Disneyland Resort", la:22.3155, lo:114.0450, l:"dr"},
+
+  // ── East Rail Line (er) ──
+  {n:"Exhibition Centre", la:22.2828, lo:114.1758, l:"er"},
+  {n:"Hung Hom", la:22.3029, lo:114.1815, l:"er"},
+  {n:"Mong Kok East", la:22.3220, lo:114.1718, l:"er"},
+  {n:"Tai Wai", la:22.3727, lo:114.1784, l:"er"},
+  {n:"Sha Tin", la:22.3828, lo:114.1867, l:"er"},
+  {n:"Fo Tan", la:22.3965, lo:114.1911, l:"er"},
+  {n:"Racecourse", la:22.4000, lo:114.2017, l:"er"},
+  {n:"University", la:22.4128, lo:114.2104, l:"er"},
+  {n:"Tai Po Market", la:22.4442, lo:114.1685, l:"er"},
+  {n:"Tai Wo", la:22.4507, lo:114.1614, l:"er"},
+  {n:"Fanling", la:22.4920, lo:114.1394, l:"er"},
+  {n:"Sheung Shui", la:22.5013, lo:114.1278, l:"er"},
+  {n:"Lo Wu", la:22.5298, lo:114.1127, l:"er"},
+  {n:"Lok Ma Chau", la:22.5152, lo:114.0658, l:"er"},
+
+  // ── Tuen Ma Line (tm) ──
+  {n:"Tuen Mun", la:22.3951, lo:113.9733, l:"tm"},
+  {n:"Siu Hong", la:22.4118, lo:113.9789, l:"tm"},
+  {n:"Tin Shui Wai", la:22.4490, lo:114.0033, l:"tm"},
+  {n:"Long Ping", la:22.4475, lo:114.0253, l:"tm"},
+  {n:"Yuen Long", la:22.4447, lo:114.0345, l:"tm"},
+  {n:"Kam Sheung Road", la:22.4334, lo:114.0638, l:"tm"},
+  {n:"Tsuen Wan West", la:22.3685, lo:114.1114, l:"tm"},
+  {n:"Austin", la:22.3031, lo:114.1664, l:"tm"},
+  {n:"East Tsim Sha Tsui", la:22.2968, lo:114.1741, l:"tm"},
+  {n:"Sung Wong Toi", la:22.3283, lo:114.1873, l:"tm"},
+  {n:"To Kwa Wan", la:22.3179, lo:114.1891, l:"tm"},
+  {n:"Kai Tak", la:22.3303, lo:114.2003, l:"tm"},
+  {n:"Hin Keng", la:22.3614, lo:114.1714, l:"tm"},
+  {n:"Che Kung Temple", la:22.3752, lo:114.1837, l:"tm"},
+  {n:"Sha Tin Wai", la:22.3768, lo:114.1931, l:"tm"},
+  {n:"City One", la:22.3853, lo:114.2033, l:"tm"},
+  {n:"Shek Mun", la:22.3929, lo:114.2087, l:"tm"},
+  {n:"Tai Shui Hang", la:22.4087, lo:114.2215, l:"tm"},
+  {n:"Heng On", la:22.4172, lo:114.2263, l:"tm"},
+  {n:"Ma On Shan", la:22.4245, lo:114.2320, l:"tm"},
+  {n:"Wu Kai Sha", la:22.4285, lo:114.2435, l:"tm"}
+];
+
+const MTR_LINE_DEFS = [
+  { name: "Tsuen Wan Line", color: "#E2231A", ids: ["Central", "Admiralty", "Tsim Sha Tsui", "Jordan", "Yau Ma Tei", "Mong Kok", "Prince Edward", "Sham Shui Po", "Cheung Sha Wan", "Lai Chi Kok", "Mei Foo", "Lai King", "Kwai Fong", "Kwai Hing", "Tai Wo Hau", "Tsuen Wan"] },
+  { name: "Island Line", color: "#007DC5", ids: ["Kennedy Town", "HKU", "Sai Ying Pun", "Sheung Wan", "Central", "Admiralty", "Wan Chai", "Causeway Bay", "Tin Hau", "Fortress Hill", "North Point", "Quarry Bay", "Tai Koo", "Sai Wan Ho", "Shau Kei Wan", "Heng Fa Chuen", "Chai Wan"] },
+  { name: "Kwun Tong Line", color: "#00AB4E", ids: ["Whampoa", "Ho Man Tin", "Yau Ma Tei", "Mong Kok", "Prince Edward", "Shek Kip Mei", "Kowloon Tong", "Lok Fu", "Wong Tai Sin", "Diamond Hill", "Choi Hung", "Kowloon Bay", "Ngau Tau Kok", "Kwun Tong", "Lam Tin", "Yau Tong", "Tiu Keng Leng"] },
+  { name: "East Rail Line", color: "#53B7E8", ids: ["Admiralty", "Exhibition Centre", "Hung Hom", "Mong Kok East", "Kowloon Tong", "Tai Wai", "Sha Tin", "Fo Tan", "Racecourse", "University", "Tai Po Market", "Tai Wo", "Fanling", "Sheung Shui", "Lo Wu"] },
+  { name: "East Rail Line (Spur)", color: "#53B7E8", ids: ["Sheung Shui", "Lok Ma Chau"] },
+  { name: "Tuen Ma Line", color: "#9A2268", ids: ["Tuen Mun", "Siu Hong", "Tin Shui Wai", "Long Ping", "Yuen Long", "Kam Sheung Road", "Tsuen Wan West", "Mei Foo", "Nam Cheong", "Austin", "East Tsim Sha Tsui", "Hung Hom", "Ho Man Tin", "To Kwa Wan", "Sung Wong Toi", "Kai Tak", "Diamond Hill", "Hin Keng", "Tai Wai", "Che Kung Temple", "Sha Tin Wai", "City One", "Shek Mun", "Tai Shui Hang", "Heng On", "Ma On Shan", "Wu Kai Sha"] },
+  { name: "Tseung Kwan O Line", color: "#A35EB5", ids: ["North Point", "Quarry Bay", "Yau Tong", "Tiu Keng Leng", "Tseung Kwan O", "Hang Hau", "Po Lam"] },
+  { name: "Tseung Kwan O Line (Spur)", color: "#A35EB5", ids: ["Tseung Kwan O", "LOHAS Park"] },
+  { name: "Tung Chung Line", color: "#F3982D", ids: ["Hong Kong", "Kowloon", "Olympic", "Nam Cheong", "Lai King", "Tsing Yi", "Sunny Bay", "Tung Chung"] },
+  { name: "South Island Line", color: "#CAB642", ids: ["Admiralty", "Ocean Park", "Wong Chuk Hang", "Lei Tung", "South Horizons"] },
+  { name: "Disneyland Resort Line", color: "#ED72A2", ids: ["Sunny Bay", "Disneyland Resort"] },
+  { name: "Airport Express", color: "#006889", ids: ["Hong Kong", "Kowloon", "Tsing Yi", "Airport", "AsiaWorld-Expo"] }
+];
+/* ================================================================
+   EMBEDDED COMPRESSED BUS STOP DATA
+   ================================================================ */
+const BUS_DATA_COMPRESSED = "H4s..StringToBeReplaced";   // ← Paste your base64 string here
+
+async function decompress(base64Data) {
+  if (!base64Data) return null;
+
+  try {
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes);
+        controller.close();
+      }
+    }).pipeThrough(new DecompressionStream('gzip'));
+
+    const response = new Response(stream);
+    const text = await response.text();
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("Decompression failed:", e);
+    return null;
+  }
+}
+
+/* ================================================================
+   MAP INITIALISATION
+   ================================================================ */
+const map = L.map('map', {
+  center: [22.3193, 114.1694],
+  zoom: 12,
+  zoomSnap: 0.5,
+  zoomDelta: 0.5,
+  minZoom: 10,
+  maxZoom: 18,
+});
+
+// Dark tile layer
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19,
+}).addTo(map);
+
+/* ================================================================
+   LAYER GROUPS
+   ================================================================ */
+const layers = {
+  mtrLines:     L.layerGroup().addTo(map),
+  mtrStations:  L.layerGroup().addTo(map),
+  kmb:          L.layerGroup().addTo(map),
+  ctb:          L.layerGroup().addTo(map),
+  nlb:          L.layerGroup().addTo(map),
+  density:      L.layerGroup(),
+};
+
+// Draw MTR lines and stations (unchanged)
+const stationMap = {};
+MTR_STATIONS.forEach(s => { stationMap[s.n] = s; });
+
+MTR_LINE_DEFS.forEach(line => {
+  const coords = line.ids.map(id => stationMap[id]).filter(Boolean).map(s => [s.la, s.lo]);
+  if (coords.length > 1) {
+    L.polyline(coords, { color: line.color, weight: 3.5, opacity: 0.8 }).bindTooltip(line.name, {sticky:true}).addTo(layers.mtrLines);
+  }
+});
+
+const drawnStations = new Set();
+MTR_STATIONS.forEach(s => {
+  if (drawnStations.has(s.n)) return;
+  drawnStations.add(s.n);
+  L.circleMarker([s.la, s.lo], { radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#000', weight: 1 })
+    .bindTooltip(s.n, {direction:'top', offset:[0,-6]}).addTo(layers.mtrStations);
+});
+
+document.getElementById('cntMTR').textContent = drawnStations.size;
+
+/* ================================================================
+   BUS STOP RENDERING - UPDATED FOR NEW FORMAT [name_tc, name_en, lat, lng]
+   ================================================================ */
+let densityOn = false;
+let busData = null;
+
+const OP_COLORS = {
+  kmb:   {fill:'#ef4444', border:'#dc2626'},
+  ctb:   {fill:'#eab308', border:'#ca8a04'},
+  nlb:   {fill:'#22c55e', border:'#16a34a'},
+  default:{fill:'#a78bfa', border:'#7c3aed'},
+};
+
+function opColor(op) {
+  return OP_COLORS[op.toLowerCase()] || OP_COLORS.default;
+}
+
+function renderBusStops() {
+  const status = document.getElementById('status');
+  layers.kmb.clearLayers();
+  layers.ctb.clearLayers();
+  layers.nlb.clearLayers();
+
+  let totalKMB = 0, totalCTB = 0, totalNLB = 0, totalOther = 0;
+
+  for (const [operator, stops] of Object.entries(busData || {})) {
+    const opKey = operator.toLowerCase();
+    const col = opColor(opKey);
+    const targetLayer = opKey === 'kmb' ? layers.kmb : opKey === 'ctb' ? layers.ctb : layers.nlb;
+
+    stops.forEach(stop => {
+      const [name_tc, name_en, lat, lng] = stop;   // ← This is the key change
+
+      if (!lat || !lng) return;   // Skip bad entries
+
+      const marker = L.circleMarker([lat, lng], {
+        radius: 3.5,
+        fillColor: col.fill,
+        fillOpacity: 0.55,
+        color: col.border,
+        weight: 0.5,
+        opacity: 0.7,
+      });
+
+      marker.bindPopup(
+        `<div class="popup-title">${name_tc || name_en}</div>` +
+        (name_tc && name_en ? `<div class="popup-sub">${name_en}</div>` : '') +
+        `<span class="popup-tag" style="background:${col.fill};color:#000">${opKey.toUpperCase()}</span>`,
+        {className:'stop-popup'}
+      );
+
+      targetLayer.addLayer(marker);
+    });
+
+    if (opKey === 'kmb') totalKMB = stops.length;
+    else if (opKey === 'ctb') totalCTB = stops.length;
+    else if (opKey === 'nlb') totalNLB = stops.length;
+    else totalOther += stops.length;
+  }
+
+  document.getElementById('cntKMB').textContent = totalKMB.toLocaleString();
+  document.getElementById('cntCTB').textContent = totalCTB.toLocaleString();
+  document.getElementById('cntNLB').textContent = totalNLB.toLocaleString();
+  document.getElementById('kmbBadge').textContent = totalKMB.toLocaleString();
+  document.getElementById('ctbBadge').textContent = totalCTB.toLocaleString();
+  document.getElementById('nlbBadge').textContent = totalNLB.toLocaleString();
+
+  status.textContent = `✓ Loaded ${(totalKMB + totalCTB + totalNLB + totalOther).toLocaleString()} bus stops`;
+}
+
+/* ================================================================
+   DENSITY GRID (Fixed)
+   ================================================================ */
+function toggleDensity() {
+  densityOn = !densityOn;
+  const btn = document.getElementById('btnDensity');
+  btn.classList.toggle('active', densityOn);
+
+  if (densityOn) {
+    buildDensityGrid();
+    layers.density.addTo(map);
+  } else {
+    map.removeLayer(layers.density);
+  }
+}
+
+function buildDensityGrid() {
+  layers.density.clearLayers();
+
+  const allStops = [];
+  if (busData) {
+    for (const stops of Object.values(busData)) {
+      stops.forEach(([,, lat, lng]) => {   // [name_tc, name_en, lat, lng]
+        if (lat && lng) allStops.push([lat, lng]);
+      });
+    }
+  }
+  MTR_STATIONS.forEach(s => allStops.push([s.la, s.lo]));
+
+  if (allStops.length === 0) return;
+
+  const cellDeg = 0.005;
+  const grid = {};
+
+  allStops.forEach(([lat, lng]) => {
+    const r = Math.floor(lat / cellDeg);
+    const c = Math.floor(lng / cellDeg);
+    const k = `${r},${c}`;
+    if (!grid[k]) grid[k] = {lat: r*cellDeg + cellDeg/2, lng: c*cellDeg + cellDeg/2, n: 0};
+    grid[k].n++;
+  });
+
+  const maxN = Math.max(...Object.values(grid).map(g => g.n), 1);
+  const half = cellDeg / 2;
+
+  Object.values(grid).forEach(g => {
+    const t = Math.pow(g.n / maxN, 0.5);
+    const col = densityColor(t);
+    L.rectangle([[g.lat - half, g.lng - half], [g.lat + half, g.lng + half]], {
+      color: null,
+      fillColor: col,
+      fillOpacity: 0.45 + t * 0.25,
+      weight: 0
+    }).bindTooltip(`${g.n} stops`, {sticky: true}).addTo(layers.density);
+  });
+}
+
+function densityColor(t) {
+  if (t < 0.2) return '#1565c0';
+  if (t < 0.4) return '#42a5f5';
+  if (t < 0.55) return '#66bb6a';
+  if (t < 0.7) return '#fdd835';
+  if (t < 0.85) return '#ff9800';
+  return '#e53935';
+}
+
+function toggleLayer(name, visible) {
+  if (visible) layers[name].addTo(map);
+  else map.removeLayer(layers[name]);
+}
+
+/* ================================================================
+   AUTO LOAD ON START
+   ================================================================ */
+document.addEventListener('DOMContentLoaded', async () => {
+  const status = document.getElementById('status');
+  status.textContent = "Decompressing transit data...";
+
+  try {
+    busData = await decompress(BUS_DATA_COMPRESSED);
+
+    if (busData && Object.keys(busData).length > 0) {
+      renderBusStops();
+    } else {
+      status.textContent = "⚠ No bus data found.";
+    }
+  } catch (e) {
+    console.error(e);
+    status.textContent = "Decompression Error: " + e.message;
+  }
+});
+</script>
+</body>
+</html>
